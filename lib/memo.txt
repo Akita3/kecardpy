@@ -1,0 +1,6 @@
+
+Python 3.8.10
+
+pip install bleak
+pip install pillow
+
