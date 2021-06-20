@@ -26,6 +26,6 @@ Pillow     8.2.0
 
 ## Usage
 ```
-kecardpy.py sample.png
+kecardpy.py
 ```
 
