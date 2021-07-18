@@ -1,5 +1,6 @@
 
 from PIL import Image
+from . import GrayImg
 
 
 class KeImage:
@@ -18,7 +19,7 @@ class KeImage:
     # Image width, height, and aspect ratio
     IMG_WIDTH = 264
     IMG_HEIGHT = 176
-    IMG_ASPECT = IMG_WIDTH / IMG_HEIGHT
+    IMG_ASPECT = 1.0 * IMG_WIDTH / IMG_HEIGHT
 
     # Number of bits and bytes in the image
     IMG_BIT_N = 2
@@ -34,9 +35,117 @@ class KeImage:
     
     
     # Initialization
-    def __init(self):
+    def __init__(self):
         pass
     
+    
+    # 
+    def fitImageSize( image ):
+        
+        width, height = image.size
+        
+        # Šù‚É264x176
+        if width == KeImage.IMG_WIDTH and height == KeImage.IMG_HEIGHT:
+            return image
+
+        # aspect
+        aspect = 1.0 * width / height;
+
+        # k¬
+        if aspect > KeImage.IMG_ASPECT :        # width > height
+            zoomRatio = 1.0 * KeImage.IMG_HEIGHT / image.height;
+            w = int(zoomRatio * width)
+            dstImage = image.resize( (w, KeImage.IMG_HEIGHT) , Image.LANCZOS)
+            offsetX = (w - KeImage.IMG_WIDTH) // 2;
+            dstImage = dstImage.crop( (offsetX , 0 , offsetX + KeImage.IMG_WIDTH , KeImage.IMG_HEIGHT) )
+        elif aspect < KeImage.IMG_ASPECT :      # height > width
+            zoomRatio = 1.0 * KeImage.IMG_WIDTH / image.width;
+            h = int(zoomRatio * height)
+            dstImage = image.resize( (KeImage.IMG_WIDTH, h) , Image.LANCZOS)
+            offsetY = (h - KeImage.IMG_HEIGHT) // 2
+            dstImage = dstImage.crop( (0 , offsetY , KeImage.IMG_WIDTH , offsetY + KeImage.IMG_HEIGHT) )
+        elif image.width != KeImage.IMG_WIDTH : # ƒTƒCƒY‚ªˆÙ‚È‚é
+            dstImage = image.resize( (KeImage.IMG_WIDTH, KeImage.IMG_HEIGHT) , Image.LANCZOS)
+
+        return dstImage;
+    
+    
+
+    def colorImageToGray2bitImageNormal( image , th1 = IMG_TH1 , th2 = IMG_TH2 , th3 = IMG_TH3 ):
+
+        # fit image size
+        image = KeImage.fitImageSize( image )
+
+        # to grayscale
+        gray = image.convert("L").convert("RGB")
+
+        # to 2bit grayscale
+        for y in range( KeImage.IMG_HEIGHT ):
+            for x in range( KeImage.IMG_WIDTH ):
+                # get pixel
+                r,g,b = gray.getpixel((x,y))
+                
+                v1 = r;
+                v2 = 0x00
+                if v1 < th1: v2 = KeImage.COLOR_0
+                elif v1 < th2: v2 = KeImage.COLOR_1
+                elif v1 < th3: v2 = KeImage.COLOR_2
+                else: v2 = KeImage.COLOR_3
+
+                # setpixel
+                gray.putpixel((x,y),(v2,v2,v2,0))
+
+        dstImage = gray;
+
+        return dstImage;
+
+
+    def colorImageToGray2bitImageDithering( image , th1 = IMG_TH1 , th2 = IMG_TH2 , th3 = IMG_TH3 ):
+
+        # fit image size
+        image = KeImage.fitImageSize( image )
+
+        # to grayscale
+        gray = image.convert("L").convert("RGB")
+
+        # new GrayImage object
+        ditherImg = GrayImg.GrayImg(gray)
+
+        # Calculation for dithering
+        for y in range( KeImage.IMG_HEIGHT ):
+            for x in range( KeImage.IMG_WIDTH ):
+                # get pixel
+                pxl = ditherImg.getPixel(x, y)
+
+                if pxl < th1: newpxl = KeImage.COLOR_0
+                elif pxl < th2: newpxl = KeImage.COLOR_1
+                elif pxl < th3: newpxl = KeImage.COLOR_2
+                else :newpxl = KeImage.COLOR_3
+
+                ditherImg.setPixel(x, y, newpxl)
+                qerr = pxl - newpxl
+
+                # x+1 , y
+                v = ditherImg.getPixel(x+1, y) + 7.0 / 16.0 * qerr
+                ditherImg.setPixel(x+1, y , int(v) )
+
+                # x-1 , y+1
+                v = ditherImg.getPixel(x-1, y+1) + 3.0 / 16.0 * qerr
+                ditherImg.setPixel(x-1, y+1 , int(v) )
+
+                # x , y+1
+                v = ditherImg.getPixel(x, y+1) + 5.0 / 16.0 * qerr
+                ditherImg.setPixel(x, y+1 , int(v) )
+
+                # x+1 , y+1
+                v = ditherImg.getPixel(x+1, y+1) + 1.0 / 16.0 * qerr
+                ditherImg.setPixel(x+1, y+1 , int(v) )
+
+        dstImage = ditherImg.getImage();
+
+        return dstImage;
+
+
     
     # Get the maximum value of the sending number.
     def getSendNoMax(self):
