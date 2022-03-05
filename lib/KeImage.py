@@ -27,7 +27,8 @@ class KeImage:
 
     # Data packet size
     PACKET_SIZE = 20
-    SEND_DATA_SIZE = 128
+    SEND_DATA_SIZE = 240
+    # SEND_DATA_SIZE = 16
     
     # Information about the image being sent
     __sendingImage = bytearray( IMG_BYTE_N )
@@ -44,14 +45,14 @@ class KeImage:
         
         width, height = image.size
         
-        # ä˘Ç…264x176
+        # 264x176 ? 
         if width == KeImage.IMG_WIDTH and height == KeImage.IMG_HEIGHT:
             return image
 
         # aspect
         aspect = 1.0 * width / height;
 
-        # èkè¨
+        # reduction
         if aspect > KeImage.IMG_ASPECT :        # width > height
             zoomRatio = 1.0 * KeImage.IMG_HEIGHT / image.height;
             w = int(zoomRatio * width)
@@ -64,7 +65,7 @@ class KeImage:
             dstImage = image.resize( (KeImage.IMG_WIDTH, h) , Image.LANCZOS)
             offsetY = (h - KeImage.IMG_HEIGHT) // 2
             dstImage = dstImage.crop( (0 , offsetY , KeImage.IMG_WIDTH , offsetY + KeImage.IMG_HEIGHT) )
-        elif image.width != KeImage.IMG_WIDTH : # ÉTÉCÉYÇ™àŸÇ»ÇÈ
+        elif image.width != KeImage.IMG_WIDTH : # „Çµ„Ç§„Ç∫„ÅåÁï∞„Å™„Çã
             dstImage = image.resize( (KeImage.IMG_WIDTH, KeImage.IMG_HEIGHT) , Image.LANCZOS)
 
         return dstImage;

@@ -63,6 +63,8 @@ class KeCardCtrl:
         try:
             await client.connect()
             
+            time.sleep(1)
+            
             # Requests the device to erase the flash.
             await client.write_gatt_char( self.KE_UUID_COMMAND_STR , [self.KE_CMD_ERASE_FLASH] )
             print( 'Flash erasing...' )
@@ -76,6 +78,7 @@ class KeCardCtrl:
             while keImage.hasFinished() == False:
                 data = keImage.getSendPacket()
                 await client.write_gatt_char( self.KE_UUID_COMMAND_STR , data )
+                time.sleep(0.1)
             print( 'Image transfer completed.' )
             
             
